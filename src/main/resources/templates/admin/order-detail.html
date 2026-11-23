@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="vi">
+<head th:replace="~{fragments :: pageHead(${'Đơn ' + order.code})}"></head>
+<body class="admin-body">
+<header th:replace="~{fragments :: adminHeader}"></header>
+
+<main class="container">
+    <div th:replace="~{fragments :: flash}"></div>
+    <div class="card-box">
+        <a th:href="@{/admin/orders}" class="small">← Danh sách đơn giỏ hàng</a>
+        <h1 th:text="'Đơn ' + ${order.code}"></h1>
+
+        <form class="admin-form" th:action="@{/admin/orders/{id}/status(id=${order.id})}" method="post">
+            <div class="field" style="margin:0">
+                <label for="status">Trạng thái</label>
+                <select id="status" name="status">
+                    <option th:each="s : ${statuses}" th:value="${s}" th:text="${s.viLabel}"
+                            th:selected="${s == order.status}"></option>
+                </select>
+            </div>
+            <div><button type="submit" class="btn">Lưu</button></div>
+            <p class="muted small full" style="margin:0">Hủy đơn sẽ tự hoàn lại số lượng sách vào kho.</p>
+        </form>
+
+        <div th:replace="~{order-view :: orderView(${order})}"></div>
+    </div>
+</main>
+</body>
+</html>

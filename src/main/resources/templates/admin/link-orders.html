@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="vi">
+<head th:replace="~{fragments :: pageHead('Đơn theo link')}"></head>
+<body class="admin-body">
+<header th:replace="~{fragments :: adminHeader}"></header>
+
+<main class="container wide">
+    <div th:replace="~{fragments :: flash}"></div>
+    <div class="card-box">
+        <div class="title-row"><h1>Đơn order theo link</h1></div>
+
+        <div class="filters">
+            <a th:href="@{/admin/link-orders}" th:classappend="${currentStatus == null} ? 'active'">Tất cả</a>
+            <a th:each="s : ${statuses}" th:href="@{/admin/link-orders(status=${s})}" th:text="${s.viLabel}"
+               th:classappend="${currentStatus == s} ? 'active'"></a>
+        </div>
+
+        <p class="muted" th:if="${#lists.isEmpty(orders)}">Chưa có đơn nào.</p>
+
+        <table class="table" th:unless="${#lists.isEmpty(orders)}">
+            <thead>
+            <tr><th>Mã đơn</th><th>Ngày</th><th>Khách hàng</th><th>Sách</th><th>Thanh toán</th>
+                <th>Tổng</th><th>Cần CK trước</th><th>Thu khi giao</th><th>Trạng thái</th></tr>
+            </thead>
+            <tbody>
+            <tr th:each="o : ${orders}">
+                <td>
+                    <a th:href="@{/admin/link-orders/{id}(id=${o.id})}" th:text="${o.code}"></a>
+                    <div th:if="${o.hasPendingPrice()}"><span class="badge-pending" th:text="'Chờ báo giá ' + ${o.pendingCount} + ' cuốn'"></span></div>
+                </td>
+                <td class="small" th:text="${#temporals.format(o.createdAt, 'dd/MM HH:mm')}"></td>
+                <td>
+                    <span th:text="${o.customerName}"></span>
+                    <div class="small"><a th:href="'tel:' + ${o.phone}" th:text="${o.phone}"></a></div>
+                </td>
+                <td class="small">
+                    <div th:each="i : ${o.items}" th:text="${i.displayName} + ' × ' + ${i.quantity} + (${i.coverType != null} ? ' (' + ${i.coverType.viLabel} + ')' : '')"></div>
+                </td>
+                <td class="small">
+                    <span th:text="${o.paymentOption.viLabel}"></span>
+                    <div class="muted" th:text="${o.receivingMethod.viLabel}"></div>
+                </td>
+                <td th:text="${#numbers.formatInteger(o.total, 1, 'POINT')} + '₫'"></td>
+                <td th:text="${#numbers.formatInteger(o.payNow, 1, 'POINT')} + '₫'"></td>
+                <td th:text="${o.payOnDelivery > 0} ? (${#numbers.formatInteger(o.payOnDelivery, 1, 'POINT')} + '₫') : '—'"></td>
+                <td><span th:class="'status ' + ${o.status.name().toLowerCase()}" th:text="${o.status.viLabel}"></span></td>
+            </tr>
+            </tbody>
+        </table>
+    </div>
+</main>
+</body>
+</html>

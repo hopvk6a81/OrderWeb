@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="en">
+<head th:replace="~{fragments :: pageHead('Order placed')}"></head>
+<body>
+<header th:replace="~{fragments :: siteHeader}"></header>
+
+<main class="container narrow">
+    <div class="card-box">
+        <div class="success-head">
+            <div class="check">✓</div>
+            <p class="eyebrow">Thank you</p>
+            <h1>Your order has been placed</h1>
+            <p>Order code: <span class="code" th:text="${order.code}"></span></p>
+            <p class="small">Keep this code to track your order.</p>
+        </div>
+
+        <!-- Hướng dẫn chuyển khoản -->
+        <div class="alert info" th:if="${order.hasPendingPrice()}">
+            We couldn't read the price of <strong th:text="${order.pendingCount}"></strong> book(s) automatically.
+            We'll confirm the final price and contact you at <strong th:text="${order.phone}"></strong>
+            <strong>before you pay</strong>. Please don't transfer any money yet.
+        </div>
+        <div class="alert info" th:unless="${order.hasPendingPrice()}">
+            <span th:if="${order.paymentOption.name() == 'BANK_FULL'}">
+                Please transfer <strong th:text="${#numbers.formatInteger(order.payNow, 1, 'POINT')} + '₫'"></strong>
+                (full payment, free shipping)
+            </span>
+            <span th:unless="${order.paymentOption.name() == 'BANK_FULL'}">
+                Please transfer a deposit of <strong th:text="${#numbers.formatInteger(order.payNow, 1, 'POINT')} + '₫'"></strong>.
+                The remaining <strong th:text="${#numbers.formatInteger(order.payOnDelivery, 1, 'POINT')} + '₫'"></strong>
+                is paid when you receive your books.
+            </span>
+            <br>Bank: <strong th:text="${@shop.bankInfo}"></strong>
+            <br>Transfer note: <strong th:text="${order.code}"></strong>
+        </div>
+
+        <h2>What happens next</h2>
+        <ol class="steps">
+            <li th:if="${order.hasPendingPrice()}">We confirm the missing prices and send you the final amount.</li>
+            <li>We confirm your payment and order the books from the supplier.</li>
+            <li>We let you know at <strong th:text="${order.phone}"></strong> when the books arrive.</li>
+            <li th:if="${order.receivingMethod.name() == 'PICKUP'}">You pick up the books at our store.</li>
+            <li th:unless="${order.receivingMethod.name() == 'PICKUP'}">We deliver the books to your address.</li>
+        </ol>
+
+        <div style="margin-top:24px" th:insert="~{order-view :: linkOrderView(${order})}"></div>
+
+        <p class="center" style="margin-top:24px">
+            <a th:href="@{/order}" class="btn outline">Order another book</a>
+            <a th:href="${@shop.mainSiteUrl}" class="btn">Back to bookstore</a>
+        </p>
+    </div>
+</main>
+
+<footer th:replace="~{fragments :: siteFooter}"></footer>
+</body>
+</html>

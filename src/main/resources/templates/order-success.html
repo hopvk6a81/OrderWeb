@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="en">
+<head th:replace="~{fragments :: pageHead('Order placed')}"></head>
+<body>
+<header th:replace="~{fragments :: siteHeader}"></header>
+
+<main class="container narrow">
+    <div class="card-box">
+        <div class="success-head">
+            <div class="check">✓</div>
+            <p class="eyebrow">Thank you</p>
+            <h1>Your order has been placed</h1>
+            <p>Order code: <span class="code" th:text="${order.code}"></span></p>
+            <p class="muted small">We'll call <strong th:text="${order.phone}"></strong> to confirm your order.</p>
+        </div>
+
+        <!-- Hướng dẫn thanh toán theo phương thức khách chọn -->
+        <div class="alert info" th:switch="${order.paymentMethod.name()}">
+            <span th:case="'BANK_TRANSFER'">
+                Please transfer <strong th:text="${#numbers.formatInteger(order.total, 1, 'POINT')} + '₫'"></strong>
+                to <strong th:text="${@shop.bankInfo}"></strong>.<br>
+                Transfer note: <strong th:text="${order.code}"></strong>
+            </span>
+            <span th:case="'COD'">
+                Please prepare <strong th:text="${#numbers.formatInteger(order.total, 1, 'POINT')} + '₫'"></strong>
+                in cash when you receive your books.
+            </span>
+            <span th:case="*">
+                We'll send a <strong th:text="${order.paymentMethod.label}"></strong> payment request for
+                <strong th:text="${#numbers.formatInteger(order.total, 1, 'POINT')} + '₫'"></strong>
+                to your phone / email to complete the payment.
+            </span>
+        </div>
+
+        <div th:replace="~{order-view :: orderView(${order})}"></div>
+
+        <p class="center" style="margin-top:20px">
+            <a th:href="@{/}" class="btn outline">Continue shopping</a>
+            <a th:href="${@shop.mainSiteUrl}" class="btn">Back to bookstore</a>
+        </p>
+    </div>
+</main>
+
+<footer th:replace="~{fragments :: siteFooter}"></footer>
+</body>
+</html>

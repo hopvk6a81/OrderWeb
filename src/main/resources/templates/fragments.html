@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="en">
+
+<head th:fragment="pageHead(title)">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title th:text="${title} + ' | ' + ${@shop.name}">Order</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400&family=Roboto:wght@400;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+</head>
+
+<body>
+
+<!-- ================= HEADER (giống web chính) ================= -->
+<header th:fragment="siteHeader" class="site-header">
+    <div class="container header-inner">
+        <nav class="nav">
+            <a th:href="${@shop.mainSiteUrl}">Home</a>
+            <a th:href="@{/}">Books</a>
+        </nav>
+        <a class="brand" th:href="${@shop.mainSiteUrl}" th:text="${@shop.name}">Linery Bookstore</a>
+        <div class="icons">
+            <a class="icon-btn" th:href="@{/}" title="Search">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+            </a>
+            <a class="icon-btn" th:href="@{/cart}" title="Cart">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 4h2l2.4 11.2a1 1 0 0 0 1 .8h9.2a1 1 0 0 0 1-.8L20 8H6.2"/><circle cx="9" cy="20" r="1.3"/><circle cx="17" cy="20" r="1.3"/></svg>
+                <span class="icon-count" th:if="${cartCount != null and cartCount > 0}" th:text="${cartCount}">1</span>
+            </a>
+            <a class="icon-btn" th:href="@{/track}" title="My orders">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="4"/><path d="M4 21c1.5-4 4.5-6 8-6s6.5 2 8 6"/></svg>
+            </a>
+        </div>
+    </div>
+</header>
+
+<div th:fragment="flash">
+    <div class="alert success" th:if="${success}" th:text="${success}"></div>
+    <div class="alert error" th:if="${error}" th:text="${error}"></div>
+</div>
+
+<footer th:fragment="siteFooter" class="site-footer">
+    <span th:text="'© ' + ${@shop.name}">© Linery Bookstore</span> ·
+    Hotline <strong th:text="${@shop.hotline}">0900 000 000</strong>
+</footer>
+
+<!-- ================= CÁC KHỐI FORM DÙNG CHUNG =================
+     Dùng bên trong phần tử có th:object="${form}" -->
+
+<div th:fragment="contactFields">
+    <h2>Contact information</h2>
+    <div class="field" th:classappend="${#fields.hasErrors('customerName')} ? 'has-error'">
+        <label for="customerName">Full name</label>
+        <input type="text" th:field="*{customerName}" placeholder="Your full name" autocomplete="name">
+        <span class="err" th:if="${#fields.hasErrors('customerName')}" th:errors="*{customerName}"></span>
+    </div>
+    <div class="row-2">
+        <div class="field" th:classappend="${#fields.hasErrors('email')} ? 'has-error'">
+            <label for="email">Email address</label>
+            <input type="email" th:field="*{email}" placeholder="you@example.com" autocomplete="email">
+            <span class="err" th:if="${#fields.hasErrors('email')}" th:errors="*{email}"></span>
+        </div>
+        <div class="field" th:classappend="${#fields.hasErrors('phone')} ? 'has-error'">
+            <label for="phone">Phone number</label>
+            <input type="tel" th:field="*{phone}" placeholder="Your phone number" autocomplete="tel">
+            <span class="err" th:if="${#fields.hasErrors('phone')}" th:errors="*{phone}"></span>
+        </div>
+    </div>
+</div>
+
+<div th:fragment="paymentFields">
+    <h2>Payment method</h2>
+    <div class="pay-grid">
+        <label class="pay-option" th:each="pm : ${paymentMethods}" th:classappend="${!pm.wallet} ? 'wide'">
+            <input type="radio" th:field="*{paymentMethod}" th:value="${pm}">
+            <span class="pay-text">
+                <strong th:text="${pm.label}">VNPay</strong>
+                <span th:text="${pm.description}">Pay with your wallet.</span>
+            </span>
+            <!-- Logo: đặt file ảnh vào static/img/payments/<tên>.png (vnpay, momo, applepay, zalopay, bank, cod) -->
+            <span class="pay-logo">
+                <img th:src="@{/img/payments/{f}.png(f=${pm.icon})}" alt=""
+                     onerror="this.parentNode.classList.add('nologo');this.remove();">
+                <span class="pay-logo-text" th:text="${pm.shortName}">PAY</span>
+            </span>
+        </label>
+    </div>
+    <span class="err" th:if="${#fields.hasErrors('paymentMethod')}" th:errors="*{paymentMethod}"></span>
+    <div class="pickup-box bank-only">
+        Transfer details: <strong th:text="${@shop.bankInfo}"></strong><br>
+        <span class="muted small">Use your order code as the transfer note. You'll see it after placing the order.</span>
+    </div>
+</div>
+
+<!-- Thanh toán cho đơn theo link: 2 lựa chọn -->
+<div th:fragment="linkPaymentFields">
+    <h2>Payment method</h2>
+    <div class="pay-grid">
+        <label class="pay-option wide" th:each="po : ${linkPaymentOptions}">
+            <input type="radio" th:field="*{paymentOption}" th:value="${po}">
+            <span class="pay-text" th:if="${po.name() == 'BANK_FULL'}">
+                <strong>Bank transfer – full payment</strong>
+                <span>Pay the full amount by bank transfer. Free shipping.</span>
+            </span>
+            <span class="pay-text" th:unless="${po.name() == 'BANK_FULL'}">
+                <strong>Cash on delivery (COD)</strong>
+                <span>Transfer a deposit now, pay the rest when you receive your books.</span>
+            </span>
+            <span class="pay-badge" th:text="${po.name() == 'BANK_FULL'} ? 'Free ship' : 'Deposit'"></span>
+        </label>
+    </div>
+    <span class="err" th:if="${#fields.hasErrors('paymentOption')}" th:errors="*{paymentOption}"></span>
+    <div class="pickup-box">
+        Transfer to: <strong th:text="${@shop.bankInfo}"></strong><br>
+        <span class="muted small">Use your order code as the transfer note. You'll see it after sending the order.</span>
+    </div>
+</div>
+
+<div th:fragment="receivingFields">
+    <h2>Receiving method</h2>
+    <div class="toggle">
+        <label th:each="rm : ${receivingMethods}">
+            <input type="radio" th:field="*{receivingMethod}" th:value="${rm}">
+            <span th:text="${rm.label}">Delivery</span>
+        </label>
+    </div>
+
+    <div class="pickup-only pickup-box">
+        Pick up at our store counter. We'll call you when your books are ready.
+        Hotline: <strong th:text="${@shop.hotline}"></strong>
+    </div>
+
+    <div class="delivery-only tab-panel">
+        <div class="field" th:classappend="${#fields.hasErrors('address')} ? 'has-error'">
+            <label for="address">Delivery address</label>
+            <input type="text" th:field="*{address}" placeholder="House number and street" autocomplete="street-address">
+            <span class="err" th:if="${#fields.hasErrors('address')}" th:errors="*{address}"></span>
+        </div>
+        <div class="row-2">
+            <div class="field" th:classappend="${#fields.hasErrors('city')} ? 'has-error'">
+                <label for="city">City</label>
+                <input type="text" th:field="*{city}" placeholder="City" autocomplete="address-level2">
+                <span class="err" th:if="${#fields.hasErrors('city')}" th:errors="*{city}"></span>
+            </div>
+            <div class="field">
+                <label for="postalCode">Postal code</label>
+                <input type="text" th:field="*{postalCode}" placeholder="Postal code" autocomplete="postal-code">
+            </div>
+        </div>
+    </div>
+
+    <div class="field">
+        <label for="notes"><span class="delivery-only">Delivery notes</span><span class="pickup-only">Notes</span></label>
+        <textarea th:field="*{notes}" rows="3" placeholder="Add instructions for delivery"></textarea>
+    </div>
+</div>
+
+<!-- Ô voucher nằm ở cột phải nhưng thuộc form bên trái (thuộc tính form="orderForm") -->
+<div th:fragment="voucherBox">
+    <label class="label" for="voucherCode">Voucher / discount code</label>
+    <div class="voucher">
+        <div class="input-wrap">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="6" width="18" height="12" rx="2"/><path d="M8 6v12" stroke-dasharray="2 2"/></svg>
+            <input class="input" type="text" th:field="*{voucherCode}" form="orderForm" placeholder="Enter your code">
+        </div>
+        <button type="button" class="btn" id="applyVoucher">Apply</button>
+    </div>
+    <div class="voucher-msg" id="voucherMsg">
+        <span class="err" th:if="${#fields.hasErrors('voucherCode')}" th:errors="*{voucherCode}"></span>
+    </div>
+</div>
+
+<!-- ================= ADMIN ================= -->
+<header th:fragment="adminHeader" class="site-header admin">
+    <div class="container wide header-inner">
+        <a class="brand" th:href="@{/admin}" th:text="${@shop.name} + ' · Quản trị'">Quản trị</a>
+        <nav class="nav">
+            <a th:href="@{/admin/link-orders}">Đơn theo link</a>
+            <a th:href="@{/admin/orders}">Đơn giỏ hàng</a>
+            <a th:href="@{/admin/books}">Sách</a>
+            <a th:href="@{/order}" target="_blank">Xem trang khách</a>
+            <form th:action="@{/logout}" method="post" class="inline">
+                <button type="submit" class="link-btn">Đăng xuất</button>
+            </form>
+        </nav>
+    </div>
+</header>
+
+</body>
+</html>

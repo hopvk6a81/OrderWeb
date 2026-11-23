@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="en">
+<head th:replace="~{fragments :: pageHead('Track your order')}"></head>
+<body>
+<header th:replace="~{fragments :: siteHeader}"></header>
+
+<main class="container narrow">
+    <div class="card-box">
+        <p class="eyebrow">Where is my order?</p>
+        <h1>Track your order</h1>
+        <form th:action="@{/track}" method="get">
+            <div class="row-2">
+                <div class="field">
+                    <label for="code">Order code</label>
+                    <input type="text" id="code" name="code" th:value="${code}" placeholder="LB... or LK..." required>
+                </div>
+                <div class="field">
+                    <label for="phone">Phone number</label>
+                    <input type="tel" id="phone" name="phone" th:value="${phone}" placeholder="Phone used for the order" required>
+                </div>
+            </div>
+            <button type="submit" class="btn block">Track</button>
+        </form>
+
+        <div class="alert error" style="margin-top:16px" th:if="${notFound}">
+            We couldn't find that order. Please check the order code and phone number.
+        </div>
+
+        <div style="margin-top:22px" th:if="${order}" th:insert="~{order-view :: orderView(${order})}"></div>
+        <div style="margin-top:22px" th:if="${linkOrder}" th:insert="~{order-view :: linkOrderView(${linkOrder})}"></div>
+    </div>
+</main>
+
+<footer th:replace="~{fragments :: siteFooter}"></footer>
+</body>
+</html>

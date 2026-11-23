@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="vi">
+<head th:replace="~{fragments :: pageHead('Quản lý sách')}"></head>
+<body class="admin-body">
+<header th:replace="~{fragments :: adminHeader}"></header>
+
+<main class="container wide">
+    <div th:replace="~{fragments :: flash}"></div>
+    <div class="card-box">
+        <div class="title-row">
+            <h1>Sách</h1>
+            <a th:href="@{/admin/books/new}" class="btn">+ Thêm sách</a>
+        </div>
+
+        <table class="table">
+            <thead>
+            <tr><th>#</th><th>Tên sách</th><th>Tác giả</th><th>Thể loại</th><th>Giá</th><th>Tồn kho</th><th>Hiển thị</th><th></th></tr>
+            </thead>
+            <tbody>
+            <tr th:each="b : ${books}" th:classappend="${!b.active} ? 'inactive'">
+                <td th:text="${b.id}"></td>
+                <td th:text="${b.title}"></td>
+                <td th:text="${b.author}"></td>
+                <td th:text="${b.category}"></td>
+                <td th:text="${#numbers.formatInteger(b.price, 1, 'POINT')} + '₫'"></td>
+                <td th:text="${b.stock}" th:classappend="${b.stock == 0} ? 'out'"></td>
+                <td>
+                    <form th:action="@{/admin/books/{id}/toggle(id=${b.id})}" method="post">
+                        <button type="submit" class="link-btn" th:text="${b.active} ? 'Đang hiện' : 'Đang ẩn'"></button>
+                    </form>
+                </td>
+                <td><a th:href="@{/admin/books/{id}/edit(id=${b.id})}">Sửa</a></td>
+            </tr>
+            </tbody>
+        </table>
+    </div>
+</main>
+</body>
+</html>

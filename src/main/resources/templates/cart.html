@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="en">
+<head th:replace="~{fragments :: pageHead('Cart')}"></head>
+<body>
+<header th:replace="~{fragments :: siteHeader}"></header>
+
+<main class="container">
+    <div th:replace="~{fragments :: flash}"></div>
+
+    <div class="card-box center" th:if="${#lists.isEmpty(lines)}">
+        <p class="eyebrow">Your cart</p>
+        <h1>Your cart is empty</h1>
+        <a th:href="@{/}" class="btn outline">Browse books</a>
+        <a th:href="@{/order}" class="btn">Order by link</a>
+    </div>
+
+    <div class="checkout-layout" th:unless="${#lists.isEmpty(lines)}">
+        <div class="card-box">
+            <p class="eyebrow">Your cart</p>
+            <h1>Shopping cart</h1>
+            <table class="table">
+                <thead><tr><th>Book</th><th>Quantity</th><th>Amount</th><th></th></tr></thead>
+                <tbody>
+                <tr th:each="l : ${lines}">
+                    <td>
+                        <a th:href="@{/books/{id}(id=${l.book.id})}" th:text="${l.book.title}"></a>
+                        <div class="muted small" th:text="${#numbers.formatInteger(l.book.price, 1, 'POINT')} + '₫'"></div>
+                        <div class="out small" th:if="${l.quantity > l.book.stock}"
+                             th:text="'Only ' + ${l.book.stock} + ' left'"></div>
+                    </td>
+                    <td>
+                        <form th:action="@{/cart/update}" method="post">
+                            <input type="hidden" name="bookId" th:value="${l.book.id}">
+                            <input class="input qty-input" type="number" name="quantity" th:value="${l.quantity}" min="0"
+                                   onchange="this.form.submit()">
+                        </form>
+                    </td>
+                    <td class="gold" th:text="${#numbers.formatInteger(l.lineTotal, 1, 'POINT')} + '₫'"></td>
+                    <td>
+                        <form th:action="@{/cart/remove}" method="post">
+                            <input type="hidden" name="bookId" th:value="${l.book.id}">
+                            <button type="submit" class="link-btn danger small">Remove</button>
+                        </form>
+                    </td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <aside class="card-box summary">
+            <p class="eyebrow">Your order</p>
+            <h1>Order summary</h1>
+            <div class="sum-row"><span>Subtotal</span>
+                <span th:text="${#numbers.formatInteger(subtotal, 1, 'POINT')} + '₫'"></span></div>
+            <div class="sum-row"><span>Delivery fee</span>
+                <span th:text="${shippingFee == 0} ? 'Free' : (${#numbers.formatInteger(shippingFee, 1, 'POINT')} + '₫')"></span></div>
+            <div class="sum-row total"><span>Total</span>
+                <span th:text="${#numbers.formatInteger(total, 1, 'POINT')} + '₫'"></span></div>
+            <a th:href="@{/checkout}" class="btn cta">Checkout</a>
+            <p class="sum-note">Choose "Pickup at counter" at checkout for free delivery.</p>
+        </aside>
+    </div>
+</main>
+
+<footer th:replace="~{fragments :: siteFooter}"></footer>
+</body>
+</html>

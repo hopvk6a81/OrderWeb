@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="vi">
+<head th:replace="~{fragments :: pageHead(${'Đơn ' + order.code})}"></head>
+<body class="admin-body">
+<header th:replace="~{fragments :: adminHeader}"></header>
+
+<main class="container">
+    <div th:replace="~{fragments :: flash}"></div>
+    <div class="card-box">
+        <a th:href="@{/admin/link-orders}" class="small">← Danh sách đơn theo link</a>
+        <h1 th:text="'Đơn ' + ${order.code}"></h1>
+
+        <form th:action="@{/admin/link-orders/{id}(id=${order.id})}" method="post">
+            <h2 style="margin-top:0">Giá bìa từng cuốn</h2>
+            <div class="alert info" th:if="${order.hasPendingPrice()}"
+                 th:text="'Có ' + ${order.pendingCount} + ' cuốn không đọc được giá. Mở link, nhập giá bìa gốc + loại tiền rồi bấm Lưu. Khi đủ giá, đơn tự chuyển sang Chờ thanh toán / cọc, khách tra cứu đơn sẽ thấy số tiền.'"></div>
+            <p class="section-hint" th:text="'Sửa giá bìa / loại tiền nếu trang web đọc sai hoặc khách nhập sai. Bấm Lưu để tính lại tiền (giá order = giá bìa -'
+                    + ${100 - @linkPricing.pricePercent} + '%, cọc COD = ' + ${@linkPricing.depositPercent} + '% giá bìa, tỷ giá theo cấu hình).'"></p>
+            <table class="table" style="margin-bottom:20px">
+                <thead><tr><th></th><th>Sách</th><th>Loại bìa</th><th>Giá bìa gốc</th><th>Tiền</th><th>Quy ra VND</th><th>Nguồn giá</th><th>SL</th></tr></thead>
+                <tbody>
+                <tr th:each="i : ${order.items}">
+                    <td><img class="thumb-sm" th:if="${i.imageUrl}" th:src="${i.imageUrl}" alt="" referrerpolicy="no-referrer"></td>
+                    <td>
+                        <strong th:text="${i.displayName}"></strong><br>
+                        <span class="muted" th:if="${i.isbn}" th:text="'ISBN ' + ${i.isbn}"></span><br th:if="${i.isbn}">
+                        <a class="url" th:href="${i.url}" th:text="${i.url}" target="_blank" rel="noopener noreferrer nofollow"></a>
+                    </td>
+                    <td>
+                        <select class="input cover-input" name="coverType" style="width:120px">
+                            <option th:each="ct, cs : ${coverTypes}" th:value="${ct}" th:text="${ct.viLabel}"
+                                    th:selected="${i.coverType == null ? cs.first : ct == i.coverType}"></option>
+                        </select>
+                    </td>
+                    <td><input class="input cover-input" type="number" name="originalPrice" min="0" step="0.01"
+                               th:value="${i.originalPrice != null} ? ${i.originalPrice} : ${i.coverPrice}"></td>
+                    <td>
+                        <select class="input cover-input" name="currency" style="width:90px">
+                            <option th:each="r : ${@rates.rates}" th:value="${r.key}" th:text="${r.key}"
+                                    th:selected="${r.key == i.suggestedCurrency}"></option>
+                        </select>
+                    </td>
+                    <td class="small" th:text="${i.coverPrice != null} ? (${#numbers.formatInteger(i.coverPrice, 1, 'POINT')} + '₫') : '—'"></td>
+                    <td>
+                        <span th:if="${i.pricePending}" class="badge-pending">Chờ báo giá</span>
+                        <span th:if="${!i.pricePending and i.autoPrice}" class="small muted">Đọc từ web</span>
+                        <span th:if="${!i.pricePending and !i.autoPrice}" class="small muted">Shop nhập</span>
+                    </td>
+                    <td th:text="${i.quantity}"></td>
+                </tr>
+                </tbody>
+            </table>
+
+            <div class="admin-form">
+                <div class="field" style="margin:0">
+                    <label for="status">Trạng thái</label>
+                    <select id="status" name="status">
+                        <option th:each="s : ${statuses}" th:value="${s}" th:text="${s.viLabel}"
+                                th:selected="${s == order.status}"></option>
+                    </select>
+                </div>
+                <div class="field" style="margin:0">
+                    <label>Thanh toán</label>
+                    <div class="small" style="padding-top:12px">
+                        <strong th:text="${order.paymentOption.viLabel}"></strong> ·
+                        cần CK trước <strong th:text="${#numbers.formatInteger(order.payNow, 1, 'POINT')} + '₫'"></strong>
+                        <span th:if="${order.payOnDelivery > 0}"> · thu khi giao
+                            <strong th:text="${#numbers.formatInteger(order.payOnDelivery, 1, 'POINT')} + '₫'"></strong></span>
+                    </div>
+                </div>
+                <div class="field full" style="margin:0">
+                    <label for="shopNote">Lời nhắn cho khách (khách xem được khi tra cứu đơn)</label>
+                    <textarea id="shopNote" name="shopNote" rows="2" th:text="${order.shopNote}"
+                              placeholder="Vd: Đã nhận cọc. Sách dự kiến về ngày 20/11."></textarea>
+                </div>
+                <div class="full"><button type="submit" class="btn">Lưu</button></div>
+            </div>
+        </form>
+
+        <div th:replace="~{order-view :: linkOrderView(${order})}"></div>
+    </div>
+</main>
+</body>
+</html>

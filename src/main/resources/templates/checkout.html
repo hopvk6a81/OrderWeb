@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="en">
+<head th:replace="~{fragments :: pageHead('Checkout')}"></head>
+<body th:attr="data-base=@{/}">
+<header th:replace="~{fragments :: siteHeader}"></header>
+
+<main class="container">
+    <div th:replace="~{fragments :: flash}"></div>
+
+    <div class="checkout-layout" th:object="${form}">
+
+        <form id="orderForm" class="card-box" th:action="@{/checkout}" method="post">
+            <p class="eyebrow">Complete your order</p>
+            <h1>Checkout</h1>
+            <div th:replace="~{fragments :: contactFields}"></div>
+            <div th:insert="~{fragments :: paymentFields}"></div>
+            <div th:insert="~{fragments :: receivingFields}"></div>
+        </form>
+
+        <aside class="card-box summary" id="summary" data-mode="checkout"
+               th:attr="data-subtotal=${subtotal},data-ship-fee=${@shop.shippingFee},data-free-from=${@shop.freeShippingFrom}">
+            <p class="eyebrow">Your order</p>
+            <h1>Order summary</h1>
+
+            <div class="sum-items">
+                <div class="sum-item" th:each="l : ${lines}">
+                    <div class="sum-thumb">
+                        <img th:if="${l.book.imageUrl}" th:src="${l.book.imageUrl}" alt="">
+                        <span th:unless="${l.book.imageUrl}">📖</span>
+                    </div>
+                    <div class="sum-info">
+                        <span class="t" th:text="${l.book.title}"></span>
+                        <span class="q" th:text="'Quantity: ' + ${l.quantity}"></span>
+                    </div>
+                    <span class="sum-price" th:text="${#numbers.formatInteger(l.lineTotal, 1, 'POINT')} + '₫'"></span>
+                </div>
+            </div>
+
+            <div th:replace="~{fragments :: voucherBox}"></div>
+
+            <div class="sum-row"><span>Subtotal</span>
+                <span th:text="${#numbers.formatInteger(subtotal, 1, 'POINT')} + '₫'"></span></div>
+            <div class="sum-row" id="discountRow" th:style="${discount == 0} ? 'display:none'">
+                <span>Discount</span>
+                <span id="discountVal" th:text="'-' + ${#numbers.formatInteger(discount, 1, 'POINT')} + '₫'"></span></div>
+            <div class="sum-row"><span>Delivery fee</span>
+                <span id="shipVal" th:text="${shippingFee == 0} ? 'Free' : (${#numbers.formatInteger(shippingFee, 1, 'POINT')} + '₫')"></span></div>
+            <div class="sum-row total"><span>Total</span>
+                <span id="totalVal" th:text="${#numbers.formatInteger(total, 1, 'POINT')} + '₫'"></span></div>
+
+            <button type="submit" form="orderForm" class="btn cta">Place order</button>
+            <p class="sum-note" th:if="${@shop.freeShippingFrom > 0}">
+                Free delivery for orders from
+                <span th:text="${#numbers.formatInteger(@shop.freeShippingFrom, 1, 'POINT')} + '₫'"></span>.
+            </p>
+        </aside>
+    </div>
+</main>
+
+<footer th:replace="~{fragments :: siteFooter}"></footer>
+<script th:src="@{/js/order.js}"></script>
+</body>
+</html>

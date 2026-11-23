@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="en">
+<head th:replace="~{fragments :: pageHead('Order by link')}"></head>
+<body th:attr="data-base=@{/}">
+<header th:replace="~{fragments :: siteHeader}"></header>
+
+<main class="container">
+    <div th:replace="~{fragments :: flash}"></div>
+
+    <div class="checkout-layout" th:object="${form}">
+
+        <!-- ============ CỘT TRÁI: ORDER ============ -->
+        <form id="orderForm" class="card-box" th:action="@{/order}" method="post">
+            <p class="eyebrow">Order any book</p>
+            <h1>Order by link</h1>
+
+            <!-- 1. Một ô nhập link duy nhất -->
+            <div class="field link-entry">
+                <label for="linkInput">Book link</label>
+                <div class="link-entry-row">
+                    <div class="link-input">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10 14a4 4 0 0 0 5.7 0l3-3a4 4 0 0 0-5.7-5.7l-1 1"/><path d="M14 10a4 4 0 0 0-5.7 0l-3 3a4 4 0 0 0 5.7 5.7l1-1"/></svg>
+                        <!-- Không có name: ô này không gửi lên máy chủ, chỉ dùng để thêm sách vào danh sách -->
+                        <input type="text" id="linkInput" inputmode="url" autocomplete="off"
+                               placeholder="Paste a book link: Amazon, Waterstones, Blackwell's, Tiki, Fahasa…"
+                               th:value="${prefillUrl}">
+                    </div>
+                </div>
+                <p class="section-hint entry-hint">
+                    Paste one link, check the details, then press <strong>OK</strong> to add it to your list.
+                    <span th:each="r, st : ${@rates.rates}" th:if="${r.key != 'VND'}"
+                          th:text="'1 ' + ${r.key} + ' = ' + ${#numbers.formatInteger(r.value, 1, 'POINT')} + '₫' + (${st.last} ? '' : ' · ')"></span>
+                </p>
+            </div>
+            <div class="lp-status" id="entryStatus"></div>
+
+            <!-- 2. Thông tin đọc được từ link: chờ khách bấm OK -->
+            <div class="entry-card" id="entryCard" hidden>
+                <div class="entry-main">
+                    <div class="lp-thumb"><img alt="" referrerpolicy="no-referrer"></div>
+                    <div class="entry-info">
+                        <span class="lp-title" id="entryTitle"></span>
+                        <span class="lp-host" id="entryHost"></span>
+                        <dl class="entry-facts">
+                            <div><dt>ISBN</dt><dd id="entryIsbn">—</dd></div>
+                            <div><dt>Edition on page</dt><dd id="entryFormat">—</dd></div>
+                        </dl>
+                    </div>
+                </div>
+
+                <div class="field">
+                    <label>Cover type</label>
+                    <div class="toggle sm cover-toggle" id="entryCovers">
+                        <label th:each="ct, cs : ${coverTypes}">
+                            <input type="radio" name="entryCover" th:value="${ct}" th:checked="${cs.first}" form="noSubmit">
+                            <span th:text="${ct.label}">Paperback</span>
+                        </label>
+                    </div>
+                </div>
+
+                <div class="entry-prices" id="entryPrices">
+                    <div><span>Cover price</span><strong class="strike" id="entryCoverPrice">—</strong></div>
+                    <div><span th:text="'Your price (-' + ${100 - @linkPricing.pricePercent} + '%)'">Your price (-15%)</span><strong class="your-price" id="entryYourPrice">—</strong></div>
+                </div>
+                <p class="lp-status warn" id="entryWarn"></p>
+
+                <div class="entry-actions">
+                    <button type="button" class="btn outline" id="entryCancel">Cancel</button>
+                    <button type="button" class="btn" id="entryOk">OK – add to list</button>
+                </div>
+            </div>
+
+            <!-- 3. Danh sách sách đã thêm -->
+            <h2>Your books <span class="list-count" id="listCount"></span></h2>
+            <span class="err" th:if="${#fields.hasErrors('items')}" th:errors="*{items}"></span>
+
+            <div class="book-list">
+                <div class="bl-head">
+                    <span>#</span><span>Cover</span><span>Book</span><span>Quantity</span><span></span>
+                </div>
+                <div id="bookRows">
+                    <!-- Hiện lại danh sách khi form có lỗi (JavaScript đọc lại giá cho từng dòng) -->
+                    <div class="bl-row" th:each="it, st : *{items}" th:attr="data-url=${it.url}">
+                        <span class="bl-num" th:text="${st.count}">1</span>
+                        <span class="bl-cover"><span class="sum-thumb">📖</span></span>
+                        <span class="bl-book">
+                            <span class="t" th:text="${it.title != null and !#strings.isEmpty(it.title)} ? ${it.title} : ${it.url}">Book</span>
+                            <span class="m" th:text="${it.coverType != null} ? ${it.coverType.label} : ''"></span>
+                            <span class="err" th:if="${#fields.hasErrors('items[__${st.index}__].url')}" th:errors="*{items[__${st.index}__].url}"></span>
+                            <span class="err" th:if="${#fields.hasErrors('items[__${st.index}__].coverType')}" th:errors="*{items[__${st.index}__].coverType}"></span>
+                            <span class="err" th:if="${#fields.hasErrors('items[__${st.index}__].quantity')}" th:errors="*{items[__${st.index}__].quantity}"></span>
+                        </span>
+                        <span class="bl-qty">
+                            <button type="button" class="qty-btn minus" aria-label="Decrease">−</button>
+                            <input type="number" class="qty-val" min="1" max="99" th:name="'items[' + ${st.index} + '].quantity'" th:value="${it.quantity}">
+                            <button type="button" class="qty-btn plus" aria-label="Increase">+</button>
+                        </span>
+                        <button type="button" class="bl-remove" aria-label="Remove">×</button>
+                        <input type="hidden" th:name="'items[' + ${st.index} + '].url'" th:value="${it.url}">
+                        <input type="hidden" th:name="'items[' + ${st.index} + '].title'" th:value="${it.title}">
+                        <input type="hidden" th:name="'items[' + ${st.index} + '].coverType'" th:value="${it.coverType}">
+                    </div>
+                </div>
+                <div class="bl-empty" id="listEmpty">No books yet. Paste a link above and press OK.</div>
+            </div>
+
+            <!-- 4. Thông tin khách, thanh toán, nhận hàng -->
+            <h2>Your details</h2>
+            <div th:replace="~{fragments :: contactFields}"></div>
+            <div th:insert="~{fragments :: linkPaymentFields}"></div>
+            <div th:insert="~{fragments :: receivingFields}"></div>
+        </form>
+
+        <!-- ============ CỘT PHẢI: INFO / THANH TOÁN ============ -->
+        <aside class="card-box summary" id="summary" data-mode="link"
+               th:attr="data-cod-ship=${@linkPricing.codShippingFee},data-round=${@linkPricing.roundTo}">
+            <h1>Order summary</h1>
+
+            <div class="sum-items-wrap">
+                <div class="sum-items" id="linkSummary">
+                    <div class="sum-empty">Books you add will appear here.</div>
+                </div>
+            </div>
+
+            <div th:replace="~{fragments :: voucherBox}"></div>
+
+            <div class="sum-row"><span>Cover price</span><span class="strike" id="coverVal">—</span></div>
+            <div class="sum-row"><span th:text="'Your price (-' + ${100 - @linkPricing.pricePercent} + '%)'">Your price (-15%)</span><span id="subVal">—</span></div>
+            <div class="sum-row" id="discountRow" style="display:none"><span>Voucher</span><span id="discountVal"></span></div>
+            <div class="sum-row"><span>Delivery fee</span><span id="shipVal">Free</span></div>
+            <div class="sum-row total"><span>Total</span><span id="totalVal">—</span></div>
+
+            <div class="pay-now-box">
+                <div class="sum-row"><span id="payNowLabel">Pay now by transfer</span><span id="payNowVal">—</span></div>
+                <div class="sum-row" id="codRow"><span>Pay on delivery</span><span id="codVal">—</span></div>
+            </div>
+            <p class="sum-note warn" id="missingPrice" style="display:none">
+                We couldn't read the price of some books. You can still place the order –
+                we'll confirm the price with you before you pay.
+            </p>
+
+            <button type="submit" form="orderForm" class="btn cta">Place order</button>
+            <p class="sum-note">
+                Prices are read directly from the book's website. We double-check every link before ordering.
+            </p>
+        </aside>
+    </div>
+</main>
+
+<!-- Mẫu 1 dòng trong danh sách (JavaScript dùng khi khách bấm OK) -->
+<template id="bookRowTpl">
+    <div class="bl-row">
+        <span class="bl-num">1</span>
+        <span class="bl-cover"><span class="sum-thumb">📖</span></span>
+        <span class="bl-book"><span class="t"></span><span class="m"></span></span>
+        <span class="bl-qty">
+            <button type="button" class="qty-btn minus" aria-label="Decrease">−</button>
+            <input type="number" class="qty-val" min="1" max="99" name="items[0].quantity" value="1">
+            <button type="button" class="qty-btn plus" aria-label="Increase">+</button>
+        </span>
+        <button type="button" class="bl-remove" aria-label="Remove">×</button>
+        <input type="hidden" name="items[0].url">
+        <input type="hidden" name="items[0].title">
+        <input type="hidden" name="items[0].coverType">
+    </div>
+</template>
+
+<footer th:replace="~{fragments :: siteFooter}"></footer>
+<script th:src="@{/js/order.js}"></script>
+</body>
+</html>

@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="vi">
+<head th:replace="~{fragments :: pageHead('Đăng nhập quản trị')}"></head>
+<body>
+<main class="container narrow login-wrap">
+    <div class="card-box">
+        <p class="eyebrow">Admin</p>
+        <h1>Đăng nhập quản trị</h1>
+        <div class="alert error" th:if="${param.error}">Sai tên đăng nhập hoặc mật khẩu.</div>
+        <form th:action="@{/login}" method="post">
+            <div class="field"><label for="username">Tên đăng nhập</label>
+                <input type="text" id="username" name="username" autofocus required></div>
+            <div class="field"><label for="password">Mật khẩu</label>
+                <input type="password" id="password" name="password" required></div>
+            <button type="submit" class="btn cta">Đăng nhập</button>
+        </form>
+    </div>
+</main>
+</body>
+</html>

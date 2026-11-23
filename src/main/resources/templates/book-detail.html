@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="en">
+<head th:replace="~{fragments :: pageHead(${book.title})}"></head>
+<body>
+<header th:replace="~{fragments :: siteHeader}"></header>
+
+<main class="container">
+    <div th:replace="~{fragments :: flash}"></div>
+    <div class="card-box">
+        <a th:href="@{/}" class="small">← All books</a>
+        <div class="detail" style="margin-top:14px">
+            <div class="cover">
+                <img th:if="${book.imageUrl}" th:src="${book.imageUrl}" th:alt="${book.title}">
+                <div th:unless="${book.imageUrl}" class="cover-ph" th:text="${book.title}"></div>
+            </div>
+            <div>
+                <span class="tag" th:if="${book.category}" th:text="${book.category}"></span>
+                <h1 th:text="${book.title}"></h1>
+                <p class="author" th:text="'by ' + ${book.author}"></p>
+                <p class="price big" th:text="${#numbers.formatInteger(book.price, 1, 'POINT')} + '₫'"></p>
+                <p class="muted small" th:if="${book.inStock}" th:text="${book.stock} + ' in stock'"></p>
+                <p class="out small" th:unless="${book.inStock}">Out of stock</p>
+
+                <form th:if="${book.inStock}" th:action="@{/cart/add}" method="post" class="buy-row">
+                    <input type="hidden" name="bookId" th:value="${book.id}">
+                    <div class="field" style="margin:0">
+                        <label for="qty">Quantity</label>
+                        <input class="qty" id="qty" type="number" name="quantity" value="1" min="1" th:max="${book.stock}">
+                    </div>
+                    <button type="submit" class="btn outline">Add to cart</button>
+                    <button type="submit" name="buyNow" value="true" class="btn">Buy now</button>
+                </form>
+                <a th:unless="${book.inStock}" class="btn" th:href="@{/order(title=${book.title})}">Order this book</a>
+
+                <div th:if="${book.description}" style="margin-top:20px">
+                    <h2>About this book</h2>
+                    <p th:text="${book.description}"></p>
+                </div>
+            </div>
+        </div>
+    </div>
+</main>
+
+<footer th:replace="~{fragments :: siteFooter}"></footer>
+</body>
+</html>

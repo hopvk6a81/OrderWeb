@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="en">
+<body>
+
+<!-- Chi tiết đơn giỏ hàng (dùng ở trang thành công, tra cứu, quản trị) -->
+<div th:fragment="orderView(order)">
+    <div class="meta-grid">
+        <div><span class="muted">Order code</span><strong th:text="${order.code}"></strong></div>
+        <div><span class="muted">Date</span><strong th:text="${#temporals.format(order.createdAt, 'dd/MM/yyyy HH:mm')}"></strong></div>
+        <div><span class="muted">Status</span>
+            <span><span th:class="'status ' + ${order.status.name().toLowerCase()}" th:text="${order.status.label}"></span></span></div>
+        <div><span class="muted">Payment</span><strong th:text="${order.paymentMethod.label}"></strong></div>
+    </div>
+
+    <p>
+        <strong th:text="${order.customerName}"></strong> · <span th:text="${order.phone}"></span>
+        <span th:if="${order.email}" th:text="' · ' + ${order.email}"></span><br>
+        <span th:if="${order.receivingMethod != null and order.receivingMethod.name() == 'PICKUP'}">Pickup at counter</span>
+        <span th:unless="${order.receivingMethod != null and order.receivingMethod.name() == 'PICKUP'}">
+            Delivery to: <span th:text="${order.address}"></span><span th:if="${order.city}" th:text="', ' + ${order.city}"></span>
+            <span th:if="${order.postalCode}" th:text="' ' + ${order.postalCode}"></span>
+        </span>
+    </p>
+    <p class="muted small" th:if="${order.note}" th:text="'Notes: ' + ${order.note}"></p>
+
+    <table class="table">
+        <thead><tr><th>Book</th><th>Price</th><th>Quantity</th><th>Amount</th></tr></thead>
+        <tbody>
+        <tr th:each="i : ${order.items}">
+            <td th:text="${i.title}"></td>
+            <td th:text="${#numbers.formatInteger(i.price, 1, 'POINT')} + '₫'"></td>
+            <td th:text="${i.quantity}"></td>
+            <td th:text="${#numbers.formatInteger(i.lineTotal, 1, 'POINT')} + '₫'"></td>
+        </tr>
+        </tbody>
+        <tfoot>
+        <tr><td colspan="3">Subtotal</td><td th:text="${#numbers.formatInteger(order.subtotal, 1, 'POINT')} + '₫'"></td></tr>
+        <tr th:if="${order.discount > 0}"><td colspan="3" th:text="'Discount (' + ${order.voucherCode} + ')'"></td>
+            <td th:text="'-' + ${#numbers.formatInteger(order.discount, 1, 'POINT')} + '₫'"></td></tr>
+        <tr><td colspan="3">Delivery fee</td>
+            <td th:text="${order.shippingFee == 0} ? 'Free' : (${#numbers.formatInteger(order.shippingFee, 1, 'POINT')} + '₫')"></td></tr>
+        <tr class="total"><td colspan="3">Total</td><td th:text="${#numbers.formatInteger(order.total, 1, 'POINT')} + '₫'"></td></tr>
+        </tfoot>
+    </table>
+</div>
+
+<!-- Chi tiết đơn theo link -->
+<div th:fragment="linkOrderView(order)">
+    <div class="meta-grid">
+        <div><span class="muted">Order code</span><strong th:text="${order.code}"></strong></div>
+        <div><span class="muted">Date</span><strong th:text="${#temporals.format(order.createdAt, 'dd/MM/yyyy HH:mm')}"></strong></div>
+        <div><span class="muted">Status</span>
+            <span><span th:class="'status ' + ${order.status.name().toLowerCase()}" th:text="${order.status.label}"></span></span></div>
+        <div><span class="muted">Receiving</span><strong th:text="${order.receivingMethod.label}"></strong></div>
+    </div>
+
+    <div class="pickup-box" th:if="${order.shopNote}" style="margin:0 0 14px">
+        <span class="muted small">Message from the shop</span><br>
+        <span th:text="${order.shopNote}"></span>
+    </div>
+
+    <p>
+        <strong th:text="${order.customerName}"></strong> · <span th:text="${order.phone}"></span>
+        <span th:if="${order.email}" th:text="' · ' + ${order.email}"></span>
+        <span th:if="${order.receivingMethod.name() == 'DELIVERY'}"><br>Delivery to:
+            <span th:text="${order.address}"></span><span th:if="${order.city}" th:text="', ' + ${order.city}"></span>
+            <span th:if="${order.postalCode}" th:text="' ' + ${order.postalCode}"></span></span>
+    </p>
+    <p class="muted small" th:if="${order.notes}" th:text="'Notes: ' + ${order.notes}"></p>
+
+    <table class="table">
+        <thead><tr><th></th><th>Book</th><th>Price</th><th>Quantity</th><th>Amount</th></tr></thead>
+        <tbody>
+        <tr th:each="i : ${order.items}">
+            <td>
+                <img class="thumb-sm" th:if="${i.imageUrl}" th:src="${i.imageUrl}" alt="" referrerpolicy="no-referrer">
+            </td>
+            <td>
+                <strong th:text="${i.displayName}"></strong><br>
+                <span class="small muted" th:if="${i.coverType != null}" th:text="${i.coverType.label} + ' · '"></span>
+                <a class="url" th:href="${i.url}" th:text="${i.host}" target="_blank" rel="noopener noreferrer nofollow"></a>
+            </td>
+            <td>
+                <span th:if="${i.unitPrice != null}" th:text="${#numbers.formatInteger(i.unitPrice, 1, 'POINT')} + '₫'"></span>
+                <span th:unless="${i.unitPrice != null}" class="badge-pending">To be confirmed</span>
+            </td>
+            <td th:text="${i.quantity}"></td>
+            <td th:text="${i.unitPrice != null} ? (${#numbers.formatInteger(i.lineTotal, 1, 'POINT')} + '₫') : '—'"></td>
+        </tr>
+        </tbody>
+        <tfoot>
+        <tr><td colspan="4">Subtotal</td><td th:text="${#numbers.formatInteger(order.subtotal, 1, 'POINT')} + '₫'"></td></tr>
+        <tr th:if="${order.discount > 0}"><td colspan="4" th:text="'Discount (' + ${order.voucherCode} + ')'"></td>
+            <td th:text="'-' + ${#numbers.formatInteger(order.discount, 1, 'POINT')} + '₫'"></td></tr>
+        <tr><td colspan="4">Delivery fee</td>
+            <td th:text="${order.shippingFee == 0} ? 'Free' : (${#numbers.formatInteger(order.shippingFee, 1, 'POINT')} + '₫')"></td></tr>
+        <tr class="total"><td colspan="4">Total</td><td th:text="${#numbers.formatInteger(order.total, 1, 'POINT')} + '₫'"></td></tr>
+        </tfoot>
+    </table>
+
+    <div class="alert info" th:if="${order.hasPendingPrice()}" style="margin-top:14px">
+        <span th:text="'We are confirming the price of ' + ${order.pendingCount} + ' book(s). The amounts below will be updated and we will contact you before you pay.'"></span>
+    </div>
+    <div class="pay-now-box">
+        <div class="sum-row"><span>Payment</span><span th:text="${order.paymentOption.label}"></span></div>
+        <div class="sum-row">
+            <span th:text="${order.paymentOption.name() == 'COD_DEPOSIT'} ? 'Deposit by bank transfer' : 'Pay by bank transfer'"></span>
+            <span th:text="${#numbers.formatInteger(order.payNow, 1, 'POINT')} + '₫'"></span></div>
+        <div class="sum-row" th:if="${order.paymentOption.name() == 'COD_DEPOSIT'}">
+            <span>Pay on delivery</span>
+            <span th:text="${#numbers.formatInteger(order.payOnDelivery, 1, 'POINT')} + '₫'"></span></div>
+    </div>
+</div>
+
+</body>
+</html>

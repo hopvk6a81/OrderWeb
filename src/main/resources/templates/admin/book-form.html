@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="vi">
+<head th:replace="~{fragments :: pageHead(${book.id == null ? 'Thêm sách' : 'Sửa sách'})}"></head>
+<body class="admin-body">
+<header th:replace="~{fragments :: adminHeader}"></header>
+
+<main class="container narrow">
+    <div class="card-box">
+        <a th:href="@{/admin/books}" class="small">← Danh sách sách</a>
+        <h1 th:text="${book.id == null} ? 'Thêm sách' : 'Sửa sách'"></h1>
+
+        <form th:action="@{/admin/books/save}" th:object="${book}" method="post">
+            <input type="hidden" th:field="*{id}">
+            <div class="field" th:classappend="${#fields.hasErrors('title')} ? 'has-error'">
+                <label for="title">Tên sách *</label>
+                <input type="text" th:field="*{title}">
+                <span class="err" th:if="${#fields.hasErrors('title')}" th:errors="*{title}"></span>
+            </div>
+            <div class="row-2">
+                <div class="field" th:classappend="${#fields.hasErrors('author')} ? 'has-error'">
+                    <label for="author">Tác giả *</label>
+                    <input type="text" th:field="*{author}">
+                    <span class="err" th:if="${#fields.hasErrors('author')}" th:errors="*{author}"></span>
+                </div>
+                <div class="field">
+                    <label for="category">Thể loại</label>
+                    <input type="text" th:field="*{category}" placeholder="Philosophy, Novel...">
+                </div>
+            </div>
+            <div class="row-2">
+                <div class="field">
+                    <label for="price">Giá bán (₫) *</label>
+                    <input type="number" th:field="*{price}" min="0" step="1000">
+                    <span class="err" th:if="${#fields.hasErrors('price')}" th:errors="*{price}"></span>
+                </div>
+                <div class="field">
+                    <label for="stock">Tồn kho *</label>
+                    <input type="number" th:field="*{stock}" min="0">
+                    <span class="err" th:if="${#fields.hasErrors('stock')}" th:errors="*{stock}"></span>
+                </div>
+            </div>
+            <div class="field">
+                <label for="imageUrl">Link ảnh bìa</label>
+                <input type="url" th:field="*{imageUrl}" placeholder="https://... (có thể lấy link ảnh từ web chính)">
+            </div>
+            <div class="field">
+                <label for="description">Giới thiệu</label>
+                <textarea th:field="*{description}" rows="5"></textarea>
+            </div>
+            <label class="small"><input type="checkbox" th:field="*{active}"> Hiển thị cho khách</label>
+            <button type="submit" class="btn cta">Lưu</button>
+        </form>
+    </div>
+</main>
+</body>
+</html>

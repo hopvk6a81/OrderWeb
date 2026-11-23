@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="en">
+<head th:replace="~{fragments :: pageHead('Books')}"></head>
+<body>
+<header th:replace="~{fragments :: siteHeader}"></header>
+
+<main class="container wide">
+    <div th:replace="~{fragments :: flash}"></div>
+
+    <h1 class="page-title">Books in store</h1>
+    <p class="page-sub">Can't find the book you want?
+        <a th:href="@{/order}">Send us a link and we'll order it for you</a>.</p>
+
+    <form class="search" th:action="@{/}" method="get">
+        <input class="input" type="text" name="q" th:value="${q}" placeholder="Search by title or author">
+        <select class="input" name="category">
+            <option value="">All categories</option>
+            <option th:each="c : ${categories}" th:value="${c}" th:text="${c}" th:selected="${c == category}"></option>
+        </select>
+        <button type="submit" class="btn">Search</button>
+    </form>
+
+    <div class="card-box center" th:if="${#lists.isEmpty(books)}">
+        <p>No books found.</p>
+        <a class="btn" th:href="@{/order(title=${q})}">Order it by link</a>
+    </div>
+
+    <div class="grid">
+        <article class="book-card" th:each="b : ${books}">
+            <a class="cover" th:href="@{/books/{id}(id=${b.id})}">
+                <img th:if="${b.imageUrl}" th:src="${b.imageUrl}" th:alt="${b.title}">
+                <div th:unless="${b.imageUrl}" class="cover-ph" th:text="${b.title}"></div>
+            </a>
+            <div class="body">
+                <span class="tag" th:if="${b.category}" th:text="${b.category}"></span>
+                <h3><a th:href="@{/books/{id}(id=${b.id})}" th:text="${b.title}"></a></h3>
+                <p class="author" th:text="${b.author}"></p>
+                <p class="price" th:text="${#numbers.formatInteger(b.price, 1, 'POINT')} + '₫'"></p>
+                <form th:if="${b.inStock}" th:action="@{/cart/add}" method="post">
+                    <input type="hidden" name="bookId" th:value="${b.id}">
+                    <button type="submit" class="btn block">Add to cart</button>
+                </form>
+                <a th:unless="${b.inStock}" class="btn outline block" th:href="@{/order(title=${b.title})}">Out of stock – Order</a>
+            </div>
+        </article>
+    </div>
+</main>
+
+<footer th:replace="~{fragments :: siteFooter}"></footer>
+</body>
+</html>
